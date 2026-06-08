@@ -1892,4 +1892,5 @@ config SND_SOC_TPA6130A2
 
 source "sound/soc/codecs/aw87xxx/Kconfig"
 source "sound/soc/codecs/aw883xx/Kconfig"
+source "sound/soc/codecs/aw881xx/Kconfig"
 endmenu

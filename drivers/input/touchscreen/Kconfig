@@ -417,6 +417,11 @@ config TOUCHSCREEN_GSL3673
 	help
 	  gsl3673 touchpad driver
 
+config TOUCHSCREEN_GSL1691
+	tristate "Silead GSL1691 touchscreens driver"
+	help
+	  gsl1691 touchscreens driver
+
 config TOUCHSCREEN_GSL3673_800X1280
 	tristate "gsl3673 800x1280 touchpad driver"
 	help
