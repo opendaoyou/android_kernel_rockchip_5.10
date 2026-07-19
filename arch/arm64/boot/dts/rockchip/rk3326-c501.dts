@@ -1,0 +1,190 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2026 Opendaoyou
+ */
+
+/dts-v1/;
+#include "rk3326.dtsi"
+#include "px30-android.dtsi"
+#include "rk3326-common.dtsi"
+
+/ {
+	model = "daoyou rk3326 c501 for linux";
+	compatible = "daoyou,rk3326-c501", "rockchip,rk3326";
+
+	adc-keys {
+		compatible = "adc-keys";
+		io-channels = <&saradc 2>;
+		io-channel-names = "buttons";
+		poll-interval = <100>;
+		keyup-threshold-microvolt = <1800000>;
+
+		esc-key {
+			linux,code = <KEY_BACK>;
+			label = "back";
+			press-threshold-microvolt = <1310000>;
+		};
+
+		home-key {
+			linux,code = <KEY_HOMEPAGE>;
+			label = "homepage";
+			press-threshold-microvolt = <624000>;
+		};
+
+		menu-key {
+			linux,code = <KEY_MENU>;
+			label = "menu";
+			press-threshold-microvolt = <987000>;
+		};
+
+		vol-down-key {
+			linux,code = <KEY_VOLUMEDOWN>;
+			label = "volume down";
+			press-threshold-microvolt = <300000>;
+		};
+
+		vol-up-key {
+			linux,code = <KEY_VOLUMEUP>;
+			label = "volume up";
+			press-threshold-microvolt = <17000>;
+		};
+	};
+
+	
+ 	wireless-wlan {
+		compatible = "wlan-platdata";
+		wifi_chip_type = "ap6212";
+		WIFI,host_wake_irq = <&gpio0 RK_PB2 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};
+
+	vcc18_lcd_n: vcc18-lcd-n {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc18_lcd_n";
+		regulator-boot-on;
+		gpio = <&gpio0 0x0d 0x01>;
+		regulator-min-microvolt = <0x2dc6c0>;
+		regulator-max-microvolt = <0x2dc6c0>;
+	};
+};
+
+&dsi {
+	status = "okay";
+
+	panel@0 {
+		compatible = "simple-panel-dsi";
+		reg = <0>;
+		backlight = <&backlight>;
+		power-supply = <&vcc18_lcd_n>;
+		reset-gpios = <&gpio3 0x14 0x01>;
+		prepare-delay-ms = <0x14>;
+		reset-value = <0x00>;
+		reset-delay-ms = <0x32>;
+		init-delay-ms = <0x32>;
+		unprepare-delay-ms = <0x14>;
+
+		width-mm = <68>;
+		height-mm = <121>;
+
+		dsi,flags = <(MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
+			      MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_EOT_PACKET)>;
+		dsi,format = <MIPI_DSI_FMT_RGB888>;
+		dsi,lanes = <2>;
+
+		panel-init-sequence = <0x5200101 0x290006ff 0x77010000 0x13150002 0xef082900 0x6ff7701 0x1029 0x3c063 0x290003 0xc10d0229 0x3c237 0x8150002 0xcc102900 0x11b00213 0x1b0d1005 0x8070724 0x4110e2c 0x331d2900 0x11b10513 0x1b0d1105 0x8070724 0x4110e2c 0x331d2900 0x6ff7701 0x1115 0x2b0b5 0x150002b1 0x6f150002 0xb2851500 0x2b38015 0x2b54c 0x150002b7 0x85150002 0xb8301500 0x2bb0015 0x2c108 0x150002c2 0x8156402 0xd0882900 0x4e00000 0x229000c 0xe101a003 0xa002a004 0xa0004444 0x29000de2 0x00 0x00 0x00 0x290005e3 0x3333 0x290003e4 0x44442900 0x11e5012b 0xa080032d 0xa080052f 0xa0800731 0xa0802900 0x5e60000 0x33332900 0x3e74444 0x290011e8 0x22ca080 0x42ea080 0x630a080 0x832a080 0x290008eb 0xe4e4 0x44004029 0x11edff 0xf017654a 0xbfafffff 0xfafba456 0x710fff29 0x6ff77 0x1000000 0x5780111 0x5100129>;
+		panel-exit-sequence = <0x5000128 0x5000110>;
+		
+		display-timings {
+			native-mode = <&timing0>;
+
+			timing0: timing0 {
+				clock-frequency = <0x233f700>;
+				hactive = <0x1e0>;
+				vactive = <0x320>;
+				hfront-porch = <0x1e>;
+				hsync-len = <0x0a>;
+				hback-porch = <0x28>;
+				vfront-porch = <0x28>;
+				vsync-len = <0x0a>;
+				vback-porch = <0x1e>;
+				hsync-active = <0x00>;
+				vsync-active = <0x00>;
+				de-active = <0x00>;
+				pixelclk-active = <0x00>;
+			};
+		};
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				panel_in_dsi: endpoint {
+					remote-endpoint = <&dsi_out_panel>;
+				};
+			};
+		};
+	};
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@1 {
+			reg = <1>;
+			dsi_out_panel: endpoint {
+				remote-endpoint = <&panel_in_dsi>;
+			};
+		};
+	};
+};
+
+&i2c0 {
+	
+	battery {
+		compatible = "rk817,battery";
+		ocv_table = <0xd48 0xe4e 0xe5f 0xe78 0xe91 0xea1 0xead 0xeb5 0xebc 0xec7 0xed3 0xee4 0xf02 0xf2b 0xf47 0xf65 0xf7d 0xfa4 0xfdf 0x1004 0x103c>;
+		design_capacity = <0x4e2>;
+		design_qmax = <0x55f>;
+		bat_res = <0x82>;
+		sleep_enter_current = <0x12c>;
+		sleep_exit_current = <0x12c>;
+		sleep_filter_current = <0x64>;
+		power_off_thresd = <0xd7a>;
+		zero_algorithm_vol = <0xf0a>;
+		max_soc_offset = <0x3c>;
+		monitor_sec = <0x05>;
+		sample_res = <0x0a>;
+		virtual_power = <0x00>;
+	};
+};
+
+&i2c1 {
+	status = "disabled";
+	clock-frequency = <400000>;
+	i2c-scl-rising-time-ns = <275>;
+	i2c-scl-falling-time-ns = <16>;
+
+};
+
+&i2c2 {
+	status = "okay";
+};
+
+
+
+&vip_mmu {
+	status = "okay";
+};
+
+/* Panfrost driver */
+&gpu {
+	mali-supply = <&vdd_logic>;
+    // interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>,
+    //              <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>,
+    //              <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
+
+    // interrupt-names = "job", "mmu", "gpu";
+    status = "okay";
+};

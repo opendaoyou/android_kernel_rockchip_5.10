@@ -1,0 +1,313 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2022 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+/dts-v1/;
+
+#include "rk3562-dictpen07-commom.dtsi"
+#include "rk3562-android.dtsi"
+// #include "rk3562-linux.dtsi"
+
+/ {
+	model = "daoyou RK3562 DictPenOne";
+	compatible = "daoyou,rk3562-dictpenone", "rockchip,rk3562";
+
+	chosen: chosen {
+		bootargs = "earlycon=uart8250,mmio32,0xff210000 console=ttyFIQ0 console=tty1";
+	};
+	// chosen: chosen {
+	// 	bootargs = "earlycon=uart8250,mmio32,0xff210000 console=ttyFIQ0 console=tty1 root=PARTUUID=614e0000-0000 rw rootwait";
+	// };
+
+	adc_keys: adc-keys {
+		compatible = "adc-keys";
+		io-channels = <&saradc0 1>;
+		io-channel-names = "buttons";
+		keyup-threshold-microvolt = <1800000>;
+		poll-interval = <100>;
+
+		// vol-up-key {
+		// 	label = "volume up";
+		// 	linux,code = <KEY_VOLUMEUP>;
+		// 	press-threshold-microvolt = <1750>;
+		// };
+
+		// vol-down-key {
+		// 	label = "volume down";
+		// 	linux,code = <KEY_VOLUMEDOWN>;
+		// 	press-threshold-microvolt = <297500>;
+		// };
+	};
+
+	aw883x-sound {
+		status = "okay";
+		compatible = "rockchip,multicodecs-card";
+		rockchip,card-name = "rockchip-aw883xx";
+		rockchip,format = "i2s";
+		rockchip,mclk-fs = <256>;
+		rockchip,cpu = <&sai0>;
+		rockchip,codec = <&aw883xx>;
+	};
+
+	// led_control {
+	// 	status = "okay";
+	// 	compatible = "led_control";
+	// 	debounce-interval = <1>;
+	// 	wakeup-source;
+	// 	pinctrl-names = "default";
+	// 	pinctrl-0 = <&led_left_gpio>, <&led_white_gpio>, <&led_ir_gpio>;
+	// 	left_gpio = <&gpio0 RK_PA6 GPIO_ACTIVE_LOW>;
+	// 	white-gpio = <&gpio1 RK_PB3 GPIO_ACTIVE_HIGH>;
+	// 	ir-gpio = <&gpio1 RK_PB4 GPIO_ACTIVE_HIGH>;
+	// 	hall-down = <&gpio0 RK_PC2 GPIO_ACTIVE_LOW>;
+	// };
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		pinctrl-names = "default";
+		pinctrl-0 = <&home_key>, <&hall_down>, <&hall_up>;
+
+		home-key {
+			gpios = <&gpio0 RK_PA4 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_VOLUMEDOWN>;
+			label = "Home Key";
+			debounce-interval = <25>;
+			wakeup-source;
+		};
+
+		// hall@1 {
+		// 	label = "hall-down";
+		// 	linux,code = <KEY_5>;
+		// 	linux,input-type = <EV_SW>;
+		// 	gpio = <&gpio0 RK_PC2 GPIO_ACTIVE_LOW>;
+		// 	debounce-interval = <50>;
+		// 	wakeup-source;
+		// };
+
+		// hall@2 {
+		// 	label = "hall-up";
+		// 	linux,code = <KEY_9>;
+		// 	linux,input-type = <EV_SW>;
+		// 	gpio = <&gpio0 RK_PA7 GPIO_ACTIVE_LOW>;
+		// 	debounce-interval = <50>;
+		// 	wakeup-source;
+		// };
+	};
+};
+
+&dsi {
+	status = "okay";
+
+	panel@0 {
+		compatible = "simple-panel-dsi";
+		reg = <0>;
+
+		power-supply=<&vcc_1v8>;
+		vdd-supply = <&vccio_sd>;
+		enable-gpios = <&gpio4 RK_PB7 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio4 RK_PB6 GPIO_ACTIVE_LOW>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_enable_gpio>, <&lcd_rst_gpio>, <&lcd_bl_gpio>;
+
+		init-delay-ms = <0x0a>;
+		enable-delay-ms = <0x0a>;
+		prepare-delay-ms = <0x0a>;
+		reset-delay-ms = <0x0a>;
+		unprepare-delay-ms = <0x14>;
+		disable-delay-ms = <0x32>;
+
+		dsi,flags = <(MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
+			MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_EOT_PACKET)>;
+		dsi,format = <MIPI_DSI_FMT_RGB888>;
+		dsi,lanes = <2>;
+
+		panel-init-sequence = <0x290004f0 0xa50ff029 0x26a11 0x290002fd 0x1a290002 0xea022900 0x2fd0029 0x2e000 0x29000bf8 0x00 0x00 0x2900 0x35103ff 0x5320111 0x50a0129>;
+		panel-exit-sequence = <0x5280128 0x5320110>;
+
+		display-timings {
+			native-mode = <&timing0>;
+
+			timing0: timing0 {
+				clock-frequency = <0x4c4b400>;
+				hactive = <0x238>;
+				vactive = <0x4ba>;
+				hback-porch = <0x104>;
+				hfront-porch = <0xfa>;
+				hsync-len = <0x04>;
+				vback-porch = <0x0c>;
+				vfront-porch = <0x0a>;
+				vsync-len = <0x04>;
+				hsync-active = <0x00>;
+				vsync-active = <0x00>;
+				de-active = <0x01>;
+				pixelclk-active = <0x01>;
+			};
+		};
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				panel_in_dsi: endpoint {
+					remote-endpoint = <&dsi_out_panel>;
+				};
+			};
+		};
+	};
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@1 {
+			reg = <1>;
+			dsi_out_panel: endpoint {
+				remote-endpoint = <&panel_in_dsi>;
+			};
+		};
+	};
+};
+
+&i2c1 {
+	status = "okay";
+
+	hynitron@1a {
+		compatible = "hyn,66xx";
+		vcc_i2c-supply = <&vcc_1v8>;
+		reg = <0x1a>;
+		reset-gpio = <&gpio0 RK_PB7 GPIO_ACTIVE_HIGH>;
+		irq-gpio = <&gpio0 RK_PC0 IRQ_TYPE_LEVEL_LOW>;
+		max-touch-number = <5>;
+		display-coords = <0 0 568 1210>;
+		pos-swap = <0>;
+		posx-reverse = <0>;
+		posy-reverse = <0>;
+		status = "okay";
+	};
+};
+
+&i2c2 {
+	status = "okay";
+
+	sensor@26 {
+		status = "okay";
+		compatible = "gs_mir3da";
+		reg = <0x26>;
+		type = <SENSOR_TYPE_ACCEL>;
+		irq-gpio = <&gpio0 RK_PA5 IRQ_TYPE_LEVEL_LOW>;
+		irq_enable = <1>;
+		poll_delay_ms = <30>;
+		layout = <4>;
+		pinctrl-0 = <&mir3_gpio>;
+		pinctrl-names = "default";
+	};
+
+	aw8680x@5c {
+		compatible = "awinic,aw8680x";
+		reg = <0x5c>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&aw8680x_reset_gpio>, <&aw8680x_wake_gpio>;
+		reset-gpio = <&gpio0 RK_PC4 GPIO_ACTIVE_HIGH>;
+		wake-gpio = <&gpio0 RK_PC3 GPIO_ACTIVE_HIGH>;
+		flash_boot_function_used;
+		status = "okay";
+	};
+};
+
+&i2c3 {
+	status = "okay";
+
+	aw883xx: aw883xx@34 {
+		compatible = "awinic,aw883xx_smartpa";
+		reg = <0x34>;
+		#sound-dai-cells = <0>;
+		reset-gpio = <&gpio4 RK_PB3 GPIO_ACTIVE_LOW>;
+		irq-gpio = <&gpio3 RK_PA7 GPIO_ACTIVE_HIGH>;
+		pinctrl-0 = <&aw_rst_gpio>;
+		pinctrl-names = "default";
+		re-min = <1000>;
+		re-max = <40000>;
+		status = "okay";
+	};
+};
+
+&pinctrl {
+	lcd {
+		lcd_rst_gpio: lcd-rst-gpio {
+			rockchip,pins = <4 RK_PB6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		lcd_enable_gpio: lcd-enable-gpio {
+			rockchip,pins = <4 RK_PB7 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		lcd_bl_gpio: lcd-bl-gpio {
+			rockchip,pins = <3 RK_PC6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	led_control {
+		led_left_gpio: led-left-gpio {
+			rockchip,pins = <0 RK_PA6 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+
+		led_white_gpio: led-white-gpio {
+			rockchip,pins = <1 RK_PB3 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led_ir_gpio: led-ir-gpio {
+			rockchip,pins = <1 RK_PB4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	gpio_keys {
+		home_key: home-key {
+			rockchip,pins = <0 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+
+		hall_up: hall-up {
+			rockchip,pins = <0 RK_PA7 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+
+		hall_down: hall-down {
+			rockchip,pins = <0 RK_PC2 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+		mir3_int {
+		mir3_gpio: mir3-gpio {
+			rockchip,pins = <0 RK_PA5 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	aw8680x {
+		aw8680x_reset_gpio: aw8680x-reset-gpio {
+			rockchip,pins = <0 RK_PC4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		aw8680x_wake_gpio: aw8680x-wake-gpio {
+			rockchip,pins = <0 RK_PC3 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	aw883xx {
+		aw_rst_gpio: aw-rst-gpio {
+			rockchip,pins = <4 RK_PB3 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	flash_led {
+		flash_led_white: flash-led-white {
+			rockchip,pins = <1 RK_PB3 RK_FUNC_GPIO &pcfg_output_low>;
+		};
+
+		flash_led_ir: flash-led-ir {
+			rockchip,pins = <1 RK_PB4 RK_FUNC_GPIO &pcfg_output_low>;
+		};
+	};
+};
