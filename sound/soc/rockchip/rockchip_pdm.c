@@ -20,6 +20,9 @@
 
 #include "rockchip_pdm.h"
 
+extern int ac107_pdm_start(unsigned int samplerate) __attribute__((weak));
+extern void ac107_pdm_stop(void) __attribute__((weak));
+
 #define PDM_DMA_BURST_SIZE		(8) /* size * width: 8*4 = 32 bytes */
 #define PDM_SIGNOFF_CLK_100M		(100000000)
 #define PDM_SIGNOFF_CLK_300M		(300000000)
@@ -341,8 +344,7 @@ static int rockchip_pdm_set_samplerate(struct rk_pdm_dev *pdm, unsigned int samp
 					 PDM_FD_DENOMINATOR_MSK,
 					 val, &change);
 		if (change) {
-			reset_control_assert(pdm->reset);
-			reset_control_deassert(pdm->reset);
+			/* Resetting the RK3308 PDM block here stalls capture. */
 			rockchip_pdm_rxctrl(pdm, 0);
 		}
 		clk_div = n / m;
@@ -368,12 +370,14 @@ static int rockchip_pdm_set_samplerate(struct rk_pdm_dev *pdm, unsigned int samp
 		regmap_update_bits(pdm->regmap, PDM_CLK_CTRL, PDM_DS_RATIO_MSK, val);
 	}
 
+	/* Keep the HPF disabled to match the vendor capture response. */
+	regmap_update_bits(pdm->regmap, PDM_HPF_CTRL, PDM_HPF_CF_MSK, 0);
 	regmap_update_bits(pdm->regmap, PDM_HPF_CTRL,
-			   PDM_HPF_CF_MSK, PDM_HPF_60HZ);
-	regmap_update_bits(pdm->regmap, PDM_HPF_CTRL,
-			   PDM_HPF_LE | PDM_HPF_RE, PDM_HPF_LE | PDM_HPF_RE);
+			   PDM_HPF_LE | PDM_HPF_RE, 0);
 	return 0;
 }
+
+static int rockchip_pdm_path_parse(struct rk_pdm_dev *pdm, struct device_node *node);
 
 static int rockchip_pdm_hw_params(struct snd_pcm_substream *substream,
 				  struct snd_pcm_hw_params *params,
@@ -434,9 +438,14 @@ static int rockchip_pdm_hw_params(struct snd_pcm_substream *substream,
 	regmap_update_bits(pdm->regmap, PDM_CTRL0,
 			   PDM_PATH_MSK | PDM_VDW_MSK,
 			   val);
-	/* all channels share the single FIFO */
+	/* Use the vendor FIFO threshold to avoid stale DMA samples. */
 	regmap_update_bits(pdm->regmap, PDM_DMA_CTRL, PDM_DMA_RDL_MSK,
-			   PDM_DMA_RDL(8 * params_channels(params)));
+			   PDM_DMA_RDL(2 * params_channels(params)));
+	regmap_update_bits(pdm->regmap, PDM_FIFO_CTRL, 0xff, 0x8);
+
+	/* The E1 AC107 leaves its PDM output tri-stated until capture starts. */
+	if (ac107_pdm_start)
+		ac107_pdm_start(params_rate(params));
 
 	return 0;
 }
@@ -654,6 +663,9 @@ static void rockchip_pdm_shutdown(struct snd_pcm_substream *substream,
 
 	if (substream->stream != SNDRV_PCM_STREAM_CAPTURE)
 		return;
+
+	if (ac107_pdm_stop)
+		ac107_pdm_stop();
 
 	regmap_update_bits(pdm->regmap, PDM_CLK_CTRL, PDM_CLK_MSK, PDM_CLK_DIS);
 }
@@ -907,8 +919,9 @@ static int rockchip_pdm_path_parse(struct rk_pdm_dev *pdm, struct device_node *n
 	unsigned int path[PDM_PATH_MAX];
 	int cnt = 0, ret = 0, i = 0, val = 0, msk = 0;
 
-	cnt = of_count_phandle_with_args(node, "rockchip,path-map",
-					 NULL);
+	cnt = of_property_count_u32_elems(node, "rockchip,path-map");
+	if (cnt == -EINVAL)
+		return -ENOENT;
 	if (cnt != PDM_PATH_MAX)
 		return cnt;
 

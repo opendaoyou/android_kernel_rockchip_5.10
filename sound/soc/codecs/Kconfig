@@ -350,6 +350,15 @@ config SND_SOC_AC97_CODEC
 	select SND_AC97_CODEC
 	select SND_SOC_AC97_BUS
 
+config SND_SOC_AC107
+	tristate "AC107 microphone ADC"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  Enable support for the AC107 two-channel microphone ADC.
+	  On the Sogou E1 the AC107 is clocked from the RK3308 PDM
+	  clock and drives its output onto the PDM capture bus.
+
 config SND_SOC_AD1836
 	tristate
 	depends on SPI_MASTER
