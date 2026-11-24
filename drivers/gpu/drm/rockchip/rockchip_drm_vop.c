@@ -3247,6 +3247,8 @@ static void vop_mcu_mode(struct drm_crtc *crtc)
 {
 	struct vop *vop = to_vop(crtc);
 
+	/* Clear the frame trigger before entering MCU hold mode. */
+	VOP_CTRL_SET(vop, mcu_frame_st, 0);
 	VOP_CTRL_SET(vop, mcu_clk_sel, 1);
 	VOP_CTRL_SET(vop, mcu_type, 1);
 
