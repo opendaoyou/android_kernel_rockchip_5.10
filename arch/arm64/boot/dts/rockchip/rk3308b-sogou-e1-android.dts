@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/dts-v1/;
+
+#include "rk3308b-sogou-e1.dtsi"
+
+/ {
+	chosen {
+		bootargs = "earlycon=uart8250,mmio32,0xff0c0000 console=ttyFIQ0 androidboot.console=ttyFIQ0 androidboot.hardware=rk3308 androidboot.baseband=N/A init=/init kpti=0 firmware_class.path=/vendor/etc/firmware";
+	};
+
+	firmware {
+		android {
+			compatible = "android,firmware";
+			hardware = "rk3308";
+
+			fstab {
+				compatible = "android,fstab";
+
+				system {
+					dev = "/dev/block/platform/ff490000.mmc/by-name/system";
+					type = "ext4";
+					mnt_flags = "ro";
+					fsmgr_flags = "wait";
+				};
+
+				vendor {
+					dev = "/dev/block/platform/ff490000.mmc/by-name/vendor";
+					type = "ext4";
+					mnt_flags = "ro";
+					fsmgr_flags = "wait";
+				};
+			};
+		};
+	};
+};
