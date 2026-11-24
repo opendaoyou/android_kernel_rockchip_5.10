@@ -146,8 +146,18 @@ out:
 
 static void st1232_ts_power(struct st1232_ts_data *ts, bool poweron)
 {
-	if (ts->reset_gpio)
-		gpiod_set_value_cansleep(ts->reset_gpio, !poweron);
+	if (!ts->reset_gpio)
+		return;
+
+	if (poweron) {
+		/* ST1633 needs a reset pulse before it responds over I2C. */
+		gpiod_set_value_cansleep(ts->reset_gpio, 1);
+		msleep(20);
+		gpiod_set_value_cansleep(ts->reset_gpio, 0);
+		msleep(20);
+	} else {
+		gpiod_set_value_cansleep(ts->reset_gpio, 1);
+	}
 }
 
 static void st1232_ts_power_off(void *data)
@@ -218,7 +228,7 @@ static int st1232_ts_probe(struct i2c_client *client,
 	ts->client = client;
 	ts->input_dev = input_dev;
 
-	ts->reset_gpio = devm_gpiod_get_optional(&client->dev, NULL,
+	ts->reset_gpio = devm_gpiod_get_optional(&client->dev, "reset",
 						 GPIOD_OUT_HIGH);
 	if (IS_ERR(ts->reset_gpio)) {
 		error = PTR_ERR(ts->reset_gpio);

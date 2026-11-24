@@ -25,9 +25,14 @@ struct adc_keys_state {
 	struct iio_channel *channel;
 	u32 num_keys;
 	u32 last_key;
+	u32 stable_key;
+	u32 stable_count;
 	u32 keyup_voltage;
 	const struct adc_keys_button *map;
 };
+
+/* Debounce transient key voltages while a contact opens or closes. */
+#define ADC_KEYS_DEBOUNCE_SAMPLES	2
 
 static void adc_keys_poll(struct input_dev *input)
 {
@@ -52,6 +57,16 @@ static void adc_keys_poll(struct input_dev *input)
 
 	if (abs(st->keyup_voltage - value) < closest)
 		keycode = 0;
+
+	if (keycode != st->stable_key) {
+		st->stable_key = keycode;
+		st->stable_count = 1;
+	} else if (st->stable_count < ADC_KEYS_DEBOUNCE_SAMPLES) {
+		st->stable_count++;
+	}
+
+	if (st->stable_count < ADC_KEYS_DEBOUNCE_SAMPLES)
+		return;
 
 	if (st->last_key && st->last_key != keycode)
 		input_report_key(input, st->last_key, 0);

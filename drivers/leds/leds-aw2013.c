@@ -15,6 +15,8 @@
 #define AW2013_RSTR 0x00
 #define AW2013_RSTR_RESET 0x55
 #define AW2013_RSTR_CHIP_ID 0x33
+/* The AW2013-compatible LED controller on E1 reports ID 0x09. */
+#define AW2013_RSTR_CHIP_ID_ALT 0x09
 
 /* Global control register */
 #define AW2013_GCR 0x01
@@ -371,7 +373,13 @@ static int aw2013_probe(struct i2c_client *client)
 		goto error_reg;
 	}
 
-	if (chipid != AW2013_RSTR_CHIP_ID) {
+	if (chipid == AW2013_RSTR_CHIP_ID_ALT)
+		dev_info(&client->dev,
+			 "Chip ID %x, using the AW2013 compatible path\n",
+			 chipid);
+
+	if (chipid != AW2013_RSTR_CHIP_ID &&
+	    chipid != AW2013_RSTR_CHIP_ID_ALT) {
 		dev_err(&client->dev, "Chip reported wrong ID: %x\n",
 			chipid);
 		ret = -ENODEV;
