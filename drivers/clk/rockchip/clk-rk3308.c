@@ -23,6 +23,7 @@ enum rk3308_plls {
 
 static struct rockchip_pll_rate_table rk3308_pll_rates[] = {
 	/* _mhz, _refdiv, _fbdiv, _postdiv1, _postdiv2, _dsmpd, _frac */
+	RK3036_PLL_RATE(1800000000, 1, 75, 1, 1, 1, 0),
 	RK3036_PLL_RATE(1608000000, 1, 67, 1, 1, 1, 0),
 	RK3036_PLL_RATE(1584000000, 1, 66, 1, 1, 1, 0),
 	RK3036_PLL_RATE(1560000000, 1, 65, 1, 1, 1, 0),
@@ -92,11 +93,14 @@ static struct rockchip_pll_rate_table rk3308_pll_rates[] = {
 }
 
 static struct rockchip_cpuclk_rate_table rk3308_cpuclk_rates[] __initdata = {
+	/* Keep ACLK and debug PCLK below their rates at 1.608 GHz. */
+	RK3308_CPUCLK_RATE(1800000000, 2, 9),
 	RK3308_CPUCLK_RATE(1608000000, 1, 7),
 	RK3308_CPUCLK_RATE(1512000000, 1, 7),
 	RK3308_CPUCLK_RATE(1488000000, 1, 5),
 	RK3308_CPUCLK_RATE(1416000000, 1, 5),
 	RK3308_CPUCLK_RATE(1392000000, 1, 5),
+	RK3308_CPUCLK_RATE(1320000000, 1, 5),
 	RK3308_CPUCLK_RATE(1296000000, 1, 5),
 	RK3308_CPUCLK_RATE(1200000000, 1, 5),
 	RK3308_CPUCLK_RATE(1104000000, 1, 5),

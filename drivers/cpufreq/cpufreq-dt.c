@@ -327,6 +327,7 @@ static void dt_cpufreq_release(void)
 static int dt_cpufreq_probe(struct platform_device *pdev)
 {
 	struct cpufreq_dt_platform_data *data = dev_get_platdata(&pdev->dev);
+	struct device_node *cpu_np;
 	int ret, cpu;
 
 	/* Request resources early so we can return in case of -EPROBE_DEFER */
@@ -348,6 +349,11 @@ static int dt_cpufreq_probe(struct platform_device *pdev)
 			dt_cpufreq_driver.get_intermediate = data->get_intermediate;
 		}
 	}
+
+	cpu_np = of_get_cpu_node(0, NULL);
+	dt_cpufreq_driver.boost_enabled =
+		of_property_read_bool(cpu_np, "rockchip,boost-on-boot");
+	of_node_put(cpu_np);
 
 	ret = cpufreq_register_driver(&dt_cpufreq_driver);
 	if (ret) {

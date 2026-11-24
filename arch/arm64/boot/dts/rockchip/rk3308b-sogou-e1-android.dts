@@ -33,3 +33,22 @@
 		};
 	};
 };
+
+&cpu0 {
+	rockchip,boost-on-boot;
+};
+
+&cpu0_opp_table {
+	opp-1608000000 {
+		opp-hz = /bits/ 64 <1608000000>;
+		opp-microvolt = <1300000 1300000 1325000>;
+		opp-microvolt-L0 = <1300000 1300000 1325000>;
+		opp-microvolt-L1 = <1275000 1275000 1325000>;
+		opp-microvolt-L2 = <1250000 1250000 1325000>;
+		opp-microvolt-L3 = <1225000 1225000 1325000>;
+		opp-microvolt-L4 = <1200000 1200000 1325000>;
+		opp-microvolt-L5 = <1175000 1175000 1325000>;
+		clock-latency-ns = <40000>;
+		turbo-mode;
+	};
+};

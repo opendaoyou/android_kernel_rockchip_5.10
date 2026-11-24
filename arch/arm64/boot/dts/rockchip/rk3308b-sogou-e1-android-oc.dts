@@ -1,0 +1,36 @@
+// SPDX-License-Identifier: GPL-2.0-only
+#include "rk3308b-sogou-e1-android.dts"
+
+#if E1_TEST_CPU_HZ != 1512000000 && E1_TEST_CPU_HZ != 1608000000 && E1_TEST_CPU_HZ != 1800000000
+#error Select one supported experimental CPU frequency with E1_TEST_CPU_HZ
+#endif
+
+#ifdef E1_TEST_CPU_UV
+#if E1_TEST_CPU_HZ != 1800000000 || E1_TEST_CPU_UV < 1300000 || E1_TEST_CPU_UV > 1350000 || (E1_TEST_CPU_UV % 12500) != 0
+#error Select an RK816 voltage step between 1.300 V and 1.350 V for the 1.800 GHz experiment
+#endif
+#define E1_TEST_CPU_VOLTAGE(stock_uv) <E1_TEST_CPU_UV E1_TEST_CPU_UV E1_TEST_CPU_UV>
+#else
+#define E1_TEST_CPU_VOLTAGE(stock_uv) <stock_uv stock_uv 1325000>
+#endif
+
+&cpu0 {
+	/delete-property/ rockchip,boost-on-boot;
+};
+
+&cpu0_opp_table {
+	/delete-node/ opp-1608000000;
+
+	opp-E1_TEST_CPU_HZ {
+		opp-hz = /bits/ 64 <E1_TEST_CPU_HZ>;
+		opp-microvolt = E1_TEST_CPU_VOLTAGE(1300000);
+		opp-microvolt-L0 = E1_TEST_CPU_VOLTAGE(1300000);
+		opp-microvolt-L1 = E1_TEST_CPU_VOLTAGE(1275000);
+		opp-microvolt-L2 = E1_TEST_CPU_VOLTAGE(1250000);
+		opp-microvolt-L3 = E1_TEST_CPU_VOLTAGE(1225000);
+		opp-microvolt-L4 = E1_TEST_CPU_VOLTAGE(1200000);
+		opp-microvolt-L5 = E1_TEST_CPU_VOLTAGE(1175000);
+		clock-latency-ns = <40000>;
+		turbo-mode;
+	};
+};
